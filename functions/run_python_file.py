@@ -4,7 +4,7 @@ import subprocess
 from safety.working_directory import resolved_paths, within_working_directory
 
 
-def run_python_file(working_directory: str, file_path: str) -> str:
+def run_python_file(working_directory: str, file_path: str, args: str) -> str:
     wd_path, path = resolved_paths(working_directory, file_path)
 
     if not within_working_directory(wd_path, path):
@@ -16,7 +16,7 @@ def run_python_file(working_directory: str, file_path: str) -> str:
 
     try:
         result = subprocess.run(
-            ["python3", path],
+            ["python3", path, args],
             cwd=wd_path,
             capture_output=True,
             timeout=30.0

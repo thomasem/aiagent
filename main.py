@@ -92,6 +92,10 @@ schemas = {
                     type=types.Type.STRING,
                     description="The Python file to run, relative to the working directory.",
                 ),
+                "args": types.Schema(
+                    type = types.Type.STRING,
+                    description="Arithmetic expression, such as 2 + 2."
+                )
             }
         )
     ),
@@ -178,9 +182,9 @@ def print_details(response: types.GenerateContentResponse, fn_results: list[dict
 
 def call_function(function_call_part: types.FunctionCall, verbose: bool = False) -> types.Content:
     function_name = function_call_part.name or ""
-    args = function_call_part.args or {}
+    kwargs = function_call_part.args or {}
     if verbose:
-        print(f'Calling function {function_name}({args})')
+        print(f'Calling function {function_name}({kwargs})')
 
     print(f' - Calling function: {function_name}')
     fn = functions.get(function_name)
@@ -199,7 +203,7 @@ def call_function(function_call_part: types.FunctionCall, verbose: bool = False)
         parts=[
             types.Part.from_function_response(
                 name=function_name,
-                response={"result": fn(working_directory, **args)},
+                response={"result": fn(working_directory, **kwargs)},
             )
         ],
     )
