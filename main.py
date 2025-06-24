@@ -132,34 +132,47 @@ def get_response_from_result(result: types.Content) -> dict[str, typing.Any]:
     return response
 
 
+def candidates_content(response: types.GenerateContentResponse) -> list[types.Content]:
+    content: list[types.Content] = []
+    for candidate in response.candidates or []:
+        if candidate.content:
+            content.append(candidate.content)
+    return content
+
+
 def generate_content(client: genai.Client, messages: list[types.Content], verbose=False):
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-001",
-        contents=messages,
-        config=types.GenerateContentConfig(
-            tools=[available_functions], system_instruction=system_prompt
+    for _ in range(20):
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-001",
+            contents=messages,
+            config=types.GenerateContentConfig(
+                tools=[available_functions], system_instruction=system_prompt
+            )
         )
-    )
+        messages.extend(candidates_content(response))
+        fn_results: list[dict[str, typing.Any]] = []
+        if response.function_calls:
+            for call in response.function_calls:
+                result = call_function(call, verbose)
+                messages.append(result)
+                fn_results.append(get_response_from_result(result))
+            continue
+        else:
+            print(response.text)
+            break
 
-    results: list[dict[str, typing.Any]] = []
-    if response.function_calls:
-        for call in response.function_calls:
-            results.append(get_response_from_result(call_function(call, verbose)))
-    else:
-        print(response.text)
-
-    if verbose:
-        print_details(response, results)
+        if verbose:
+            print_details(response, fn_results)
 
 
-def print_details(response: types.GenerateContentResponse, results: list[dict[str, typing.Any]]):
+def print_details(response: types.GenerateContentResponse, fn_results: list[dict[str, typing.Any]]):
     if response.usage_metadata is None:
         print("No response metadata is available. Nothing to print.")
         return
     print(f'Prompt tokens: {response.usage_metadata.prompt_token_count}')
     print(f'Response tokens: {response.usage_metadata.candidates_token_count}')
 
-    for result in results:
+    for result in fn_results:
         print(f'-> {result}')
 
 
