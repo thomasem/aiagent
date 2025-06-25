@@ -3,7 +3,7 @@ import pathlib
 
 def resolved_paths(working_directory: str, file_path: str) -> tuple[pathlib.Path, pathlib.Path]:
     wd_path = pathlib.Path(working_directory).resolve()
-    path = (wd_path / (file_path or "")).resolve()
+    path = (wd_path / (file_path)).resolve()
     return wd_path, path
 
 
