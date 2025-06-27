@@ -145,6 +145,7 @@ def candidates_content(response: types.GenerateContentResponse) -> list[types.Co
 
 
 def generate_content(client: genai.Client, messages: list[types.Content], verbose=False):
+    should_break = False
     for _ in range(20):
         response = client.models.generate_content(
             model="gemini-2.0-flash-001",
@@ -163,11 +164,13 @@ def generate_content(client: genai.Client, messages: list[types.Content], verbos
             continue
         else:
             print(response.text)
-            break
+            should_break = True
 
         if verbose:
             print_details(response, fn_results)
 
+        if should_break:
+            break
 
 def print_details(response: types.GenerateContentResponse, fn_results: list[dict[str, typing.Any]]):
     if response.usage_metadata is None:
